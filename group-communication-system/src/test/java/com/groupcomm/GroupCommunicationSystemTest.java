@@ -11,6 +11,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
+import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -360,7 +361,7 @@ public class GroupCommunicationSystemTest {
         registry.registerMember(alice, new PrintWriter(new StringWriter()));
         
         // Get initial ping time
-        var initialPing = alice.getLastPing();
+        LocalDateTime initialPing = alice.getLastPing();
         
         // Wait a bit
         Thread.sleep(100);
@@ -369,7 +370,7 @@ public class GroupCommunicationSystemTest {
         registry.updateMemberPing("Alice");
         
         // Assert
-        var updatedPing = alice.getLastPing();
+        LocalDateTime updatedPing = alice.getLastPing();
         assertTrue(updatedPing.isAfter(initialPing), "Ping time should be updated");
         
         System.out.println("✓ Test 11 passed: Member ping updates are recorded");
