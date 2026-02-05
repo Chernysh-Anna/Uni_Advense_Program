@@ -238,10 +238,15 @@ public class GroupCommunicationClient extends JFrame {
     private void connectToServer() {
         String serverIp = serverIpField.getText().trim();
         String portText = serverPortField.getText().trim();
-        String id = memberIdField.getText().trim();
+        String proposedId = memberIdField.getText().trim();
         
-        // Validate input
-        if (id.isEmpty()) {
+        // Validation
+        if (serverIp.isEmpty()) {
+            showError("Please enter server IP address");
+            return;
+        }
+        
+        if (proposedId.isEmpty()) {
             showError("Please enter your member ID");
             return;
         }
@@ -249,8 +254,8 @@ public class GroupCommunicationClient extends JFrame {
         int port;
         try {
             port = Integer.parseInt(portText);
-            if (port < 1024 || port > 65535) {
-                showError("Port must be between 1024 and 65535");
+            if (port < 1 || port > 65535) {
+                showError("Port must be between 1 and 65535");
                 return;
             }
         } catch (NumberFormatException e) {
@@ -260,85 +265,97 @@ public class GroupCommunicationClient extends JFrame {
         
         // Attempt connection
         try {
-            appendMessage("Connecting to " + serverIp + ":" + port + "...");
+            appendMessage("=== Connecting to " + serverIp + ":" + port + " ===");
             
             socket = new Socket(serverIp, port);
             input = new Scanner(socket.getInputStream());
             output = new PrintWriter(socket.getOutputStream(), true);
+            
+            // Wait for SUBMITID request
+            if (!input.hasNextLine()) {
+                throw new IOException("Server closed connection");
+            }
+            
+            String response = input.nextLine();
+            if (!response.equals("SUBMITID")) {
+                throw new IOException("Unexpected server response: " + response);
+            }
+            
+            // Send member ID
+            output.println(proposedId);
+            output.flush();
+            
+            // Wait for acceptance or error
+            if (!input.hasNextLine()) {
+                throw new IOException("Server closed connection");
+            }
+            
+            response = input.nextLine();
+            
+            if (response.startsWith("ERROR")) {
+                String errorMsg = response.substring(6); // Remove "ERROR|"
+                showError("Connection rejected: " + errorMsg);
+                socket.close();
+                return;
+            }
+            
+            if (!response.startsWith("ACCEPTED")) {
+                throw new IOException("Unexpected server response: " + response);
+            }
+            
+            // Parse acceptance message: ACCEPTED|memberID|isCoordinator
+            String[] parts = response.split("\\|");
+            if (parts.length >= 3) {
+                this.memberId = parts[1];
+                this.isCoordinator = Boolean.parseBoolean(parts[2]);
+            } else {
+                this.memberId = proposedId;
+            }
+            
+            // Connection successful
+            connected = true;
+            
+            // Update GUI
+            SwingUtilities.invokeLater(() -> {
+                connectButton.setEnabled(false);
+                disconnectButton.setEnabled(true);
+                serverIpField.setEnabled(false);
+                serverPortField.setEnabled(false);
+                memberIdField.setEnabled(false);
+                
+                // FIXED: Enable message input controls
+                messageField.setEnabled(true);
+                sendButton.setEnabled(true);
+                whoButton.setEnabled(true);
+                helpButton.setEnabled(true);
+                
+                statusLabel.setText("Status: Connected as " + memberId);
+                statusLabel.setForeground(new Color(76, 175, 80));
+                
+                // FIXED: Update coordinator label immediately
+                if (isCoordinator) {
+                    coordinatorLabel.setText("Coordinator: YOU");
+                    coordinatorLabel.setForeground(new Color(255, 152, 0));
+                }
+                
+                appendMessage("=== Connected successfully as " + memberId + " ===");
+                if (isCoordinator) {
+                    appendMessage("=== You are the COORDINATOR ===");
+                }
+                
+                // Focus message field for immediate typing
+                messageField.requestFocusInWindow();
+            });
             
             // Start receiver thread
             receiverThread = new Thread(this::receiveMessages);
             receiverThread.setDaemon(true);
             receiverThread.start();
             
-            // Wait for ID submission request
-            if (input.hasNextLine()) {
-                String request = input.nextLine();
-                if (request.equals("SUBMITID")) {
-                    output.println(id);
-                    output.flush();
-                }
-            }
-            
-            // Wait for response
-            if (input.hasNextLine()) {
-                String response = input.nextLine();
-                
-                if (response.startsWith("ERROR")) {
-                    String error = response.substring(response.indexOf('|') + 1);
-                    showError(error);
-                    socket.close();
-                    return;
-                }
-                
-                if (response.startsWith("ACCEPTED")) {
-                    String[] parts = response.split("\\|");
-                    this.memberId = parts[1];
-                    this.isCoordinator = Boolean.parseBoolean(parts[2]);
-                    
-                    onConnectionSuccess();
-                }
-            }
-            
         } catch (IOException e) {
-            showError("Failed to connect: " + e.getMessage());
-            appendMessage("Connection failed: " + e.getMessage());
+            showError("Connection failed: " + e.getMessage());
+            cleanup();
         }
-    }
-    
-    /**
-     * Called when connection is successful.
-     * Updates GUI state using SwingUtilities for thread safety.
-     */
-    private void onConnectionSuccess() {
-        SwingUtilities.invokeLater(() -> {
-            connected = true;
-            
-            // Update UI state
-            serverIpField.setEnabled(false);
-            serverPortField.setEnabled(false);
-            memberIdField.setEnabled(false);
-            connectButton.setEnabled(false);
-            disconnectButton.setEnabled(true);
-            
-            messageField.setEnabled(true);
-            sendButton.setEnabled(true);
-            whoButton.setEnabled(true);
-            helpButton.setEnabled(true);
-            
-            statusLabel.setText("Status: Connected as " + memberId);
-            statusLabel.setForeground(new Color(76, 175, 80));
-            
-            if (isCoordinator) {
-                coordinatorLabel.setText("Coordinator: YOU");
-                coordinatorLabel.setForeground(new Color(255, 152, 0));
-            }
-            
-            appendMessage("=== Connected to server ===");
-            appendMessage("Your ID: " + memberId);
-            
-            messageField.requestFocus();
-        });
     }
     
     /**
@@ -354,43 +371,69 @@ public class GroupCommunicationClient extends JFrame {
                 output.println("/quit");
                 output.flush();
             }
-            
-            if (socket != null && !socket.isClosed()) {
-                socket.close();
-            }
-            
-            connected = false;
-            
-            SwingUtilities.invokeLater(this::onDisconnection);
-            
-        } catch (IOException e) {
-            appendMessage("Error during disconnection: " + e.getMessage());
+        } catch (Exception e) {
+            // Ignore
         }
+        
+        cleanup();
+        updateGUIAfterDisconnect();
     }
     
     /**
-     * Called when disconnected.
-     * Updates GUI state.
+     * Cleans up network resources.
      */
-    private void onDisconnection() {
-        // Update UI state
-        serverIpField.setEnabled(true);
-        serverPortField.setEnabled(true);
-        memberIdField.setEnabled(true);
-        connectButton.setEnabled(true);
-        disconnectButton.setEnabled(false);
+    private void cleanup() {
+        connected = false;
         
-        messageField.setEnabled(false);
-        sendButton.setEnabled(false);
-        whoButton.setEnabled(false);
-        helpButton.setEnabled(false);
+        try {
+            if (receiverThread != null && receiverThread.isAlive()) {
+                receiverThread.interrupt();
+            }
+            if (input != null) {
+                input.close();
+            }
+            if (output != null) {
+                output.close();
+            }
+            if (socket != null && !socket.isClosed()) {
+                socket.close();
+            }
+        } catch (IOException e) {
+            // Ignore cleanup errors
+        }
         
-        statusLabel.setText("Status: Disconnected");
-        statusLabel.setForeground(Color.RED);
-        coordinatorLabel.setText("Coordinator: N/A");
-        coordinatorLabel.setForeground(Color.BLACK);
-        
-        appendMessage("=== Disconnected from server ===");
+        socket = null;
+        input = null;
+        output = null;
+        receiverThread = null;
+        memberId = null;
+        isCoordinator = false;
+    }
+    
+    /**
+     * Updates GUI after disconnection.
+     */
+    private void updateGUIAfterDisconnect() {
+        SwingUtilities.invokeLater(() -> {
+            connectButton.setEnabled(true);
+            disconnectButton.setEnabled(false);
+            serverIpField.setEnabled(true);
+            serverPortField.setEnabled(true);
+            memberIdField.setEnabled(true);
+            
+            messageField.setEnabled(false);
+            messageField.setText("");
+            sendButton.setEnabled(false);
+            whoButton.setEnabled(false);
+            helpButton.setEnabled(false);
+            
+            statusLabel.setText("Status: Disconnected");
+            statusLabel.setForeground(Color.RED);
+            coordinatorLabel.setText("Coordinator: N/A");
+            coordinatorLabel.setForeground(Color.BLACK);
+            
+            appendMessage("=== Disconnected from server ===");
+        });
     }
     
     /**
@@ -509,21 +552,67 @@ public class GroupCommunicationClient extends JFrame {
     private void handleSystemMessage(Message message) {
         String content = message.getContent();
         
-        // Check for coordinator changes
-        if (content.contains("is the new COORDINATOR")) {
-            String[] parts = content.split(" ");
-            String newCoordinator = parts[0];
-            
+        // FIXED: Detect if this user is the coordinator
+        if (content.contains("You are the COORDINATOR")) {
             SwingUtilities.invokeLater(() -> {
-                if (newCoordinator.equals(memberId)) {
-                    isCoordinator = true;
-                    coordinatorLabel.setText("Coordinator: YOU");
-                    coordinatorLabel.setForeground(new Color(255, 152, 0));
-                } else {
-                    isCoordinator = false;
-                    coordinatorLabel.setText("Coordinator: " + newCoordinator);
-                    coordinatorLabel.setForeground(Color.BLACK);
+                isCoordinator = true;
+                coordinatorLabel.setText("Coordinator: YOU");
+                coordinatorLabel.setForeground(new Color(255, 152, 0));
+            });
+        }
+        
+        // FIXED: Parse current coordinator information
+        if (content.contains("Current Coordinator is:")) {
+            SwingUtilities.invokeLater(() -> {
+                try {
+                    // Format: "Connected. Current Coordinator is: ID (IP:Port) [COORDINATOR]"
+                    int startIdx = content.indexOf("is: ") + 4;
+                    if (startIdx > 3) {
+                        String coordInfo = content.substring(startIdx).trim();
+                        // Extract just the ID (everything before the first space or parenthesis)
+                        int endIdx = coordInfo.indexOf(' ');
+                        if (endIdx < 0) {
+                            endIdx = coordInfo.indexOf('(');
+                        }
+                        if (endIdx > 0) {
+                            String coordId = coordInfo.substring(0, endIdx).trim();
+                            coordinatorLabel.setText("Coordinator: " + coordId);
+                            coordinatorLabel.setForeground(Color.BLACK);
+                        }
+                    }
+                } catch (Exception e) {
+                    System.err.println("Error parsing coordinator info: " + e.getMessage());
                 }
+            });
+        }
+        
+        // FIXED: Handle coordinator changes
+        if (content.contains("is the new COORDINATOR")) {
+            try {
+                String newCoordinator = content.split(" ")[0].trim();
+                
+                SwingUtilities.invokeLater(() -> {
+                    if (newCoordinator.equals(memberId)) {
+                        isCoordinator = true;
+                        coordinatorLabel.setText("Coordinator: YOU");
+                        coordinatorLabel.setForeground(new Color(255, 152, 0));
+                    } else {
+                        isCoordinator = false;
+                        coordinatorLabel.setText("Coordinator: " + newCoordinator);
+                        coordinatorLabel.setForeground(Color.BLACK);
+                    }
+                });
+            } catch (Exception e) {
+                System.err.println("Error parsing coordinator change: " + e.getMessage());
+            }
+        }
+        
+        // FIXED: Handle "You are now the COORDINATOR" message
+        if (content.contains("You are now the COORDINATOR")) {
+            SwingUtilities.invokeLater(() -> {
+                isCoordinator = true;
+                coordinatorLabel.setText("Coordinator: YOU");
+                coordinatorLabel.setForeground(new Color(255, 152, 0));
             });
         }
         

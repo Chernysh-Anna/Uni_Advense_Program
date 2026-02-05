@@ -70,9 +70,9 @@ public class GroupCommunicationServer {
         serverSocket = new ServerSocket(port);
         running = true;
         
-        System.out.println("╔════════════════════════════════════════════════╗");
-        System.out.println("║   Group Communication Server                  ║");
-        System.out.println("╚════════════════════════════════════════════════╝");
+        System.out.println("==================================================");
+        System.out.println("   Group Communication Server                    ");
+        System.out.println("==================================================");
         System.out.println("Server started on port: " + port);
         System.out.println("Waiting for clients to connect...");
         System.out.println();
@@ -203,3 +203,9 @@ public class GroupCommunicationServer {
         }
     }
 }
+
+
+
+
+
+

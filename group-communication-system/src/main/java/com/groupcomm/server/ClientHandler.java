@@ -10,8 +10,7 @@ import java.util.Scanner;
 /**
  * Handles communication with a single client.
  * Each client connection runs in its own thread.
- * 
- * Design Pattern: Command Pattern (processes different message types)
+ * * Design Pattern: Command Pattern (processes different message types)
  * Purpose: Isolates client handling logic and enables concurrent client management.
  */
 public class ClientHandler implements Runnable {
@@ -27,8 +26,7 @@ public class ClientHandler implements Runnable {
     
     /**
      * Constructs a client handler.
-     * 
-     * @param socket The client socket connection
+     * * @param socket The client socket connection
      * @param registry The group registry
      */
     public ClientHandler(Socket socket, GroupRegistry registry) {
@@ -56,8 +54,7 @@ public class ClientHandler implements Runnable {
     
     /**
      * Sets up input/output streams for the client connection.
-     * 
-     * @throws IOException if stream setup fails
+     * * @throws IOException if stream setup fails
      */
     private void setupConnection() throws IOException {
         input = new Scanner(socket.getInputStream());
@@ -69,8 +66,7 @@ public class ClientHandler implements Runnable {
     /**
      * Authenticates the member and registers them in the group.
      * Implements the join protocol.
-     * 
-     * @return true if authentication successful
+     * * @return true if authentication successful
      */
     private boolean authenticateMember() {
         try {
@@ -117,17 +113,41 @@ public class ClientHandler implements Runnable {
             output.println("ACCEPTED|" + memberId + "|" + isCoordinator);
             output.flush();
             
-            // Notify about coordinator
-            String coordinatorId = registry.getCoordinatorId();
+            // --- MODIFIED SECTION START ---
+            
+            // Check status and send appropriate welcome message
             if (isCoordinator) {
-                Message welcome = Message.system("You are the COORDINATOR of this group");
+                // Case 1: First user is informed they are the coordinator
+                Message welcome = Message.system(
+                    "You are the first member to join.\n" +
+                    "*** YOU ARE NOW THE GROUP COORDINATOR ***\n" +
+                    "You are responsible for maintaining the group state."
+                );
                 output.println(welcome.toProtocolString());
                 output.flush();
             } else {
-                Message welcome = Message.system("Welcome to the group. Coordinator is: " + coordinatorId);
+                // Case 2: Subsequent users receive details of the current coordinator
+                String coordinatorId = registry.getCoordinatorId();
+                MemberInfo coordInfo = registry.getMemberInfo(coordinatorId);
+                
+                String coordDetails = "Unknown";
+                if (coordInfo != null) {
+                    coordDetails = String.format("%s (IP: %s, Port: %d)", 
+                        coordInfo.getMemberId(), 
+                        coordInfo.getIpAddress(), 
+                        coordInfo.getPort());
+                }
+
+                Message welcome = Message.system(
+                    "Welcome to the group, " + memberId + "!\n" +
+                    "Current Coordinator: " + coordinatorId + "\n" +
+                    "Coordinator Details: " + coordDetails
+                );
                 output.println(welcome.toProtocolString());
                 output.flush();
             }
+            
+            // --- MODIFIED SECTION END ---
             
             // Announce to other members
             Message joinAnnouncement = Message.system(memberId + " has joined the group");
@@ -179,8 +199,7 @@ public class ClientHandler implements Runnable {
     /**
      * Parses a message from the client.
      * Supports both protocol strings and plain text.
-     * 
-     * @param line The input line
+     * * @param line The input line
      * @return Parsed message or null if invalid
      */
     private Message parseClientMessage(String line) {
@@ -211,8 +230,7 @@ public class ClientHandler implements Runnable {
     
     /**
      * Routes a message to the appropriate delivery strategy.
-     * 
-     * @param message The message to route
+     * * @param message The message to route
      */
     private void routeMessage(Message message) {
         // Log the message
@@ -234,8 +252,7 @@ public class ClientHandler implements Runnable {
     
     /**
      * Handles special commands starting with /.
-     * 
-     * @param command The command string
+     * * @param command The command string
      */
     private void handleCommand(String command) {
         String[] parts = command.split(" ", 2);
