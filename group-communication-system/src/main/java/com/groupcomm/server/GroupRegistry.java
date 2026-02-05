@@ -12,6 +12,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Design Pattern: Singleton Pattern
  * Purpose: Ensures a single source of truth for group membership across all server threads.
  */
+
 public class GroupRegistry {
     
     private static volatile GroupRegistry instance;

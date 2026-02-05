@@ -148,20 +148,33 @@ public class HeartbeatMonitor {
         // Remove the member
         registry.removeMember(memberId);
         
-        // Notify remaining members
-        Message notification;
+        // FIXED: Proper coordinator change notification
         if (wasCoordinator) {
             String newCoordinatorId = registry.getCoordinatorId();
-            notification = Message.system(
-                "COORDINATOR " + memberId + " disconnected. " +
-                (newCoordinatorId != null ? newCoordinatorId + " is the new COORDINATOR." : "Group is empty.")
-            );
+            if (newCoordinatorId != null) {
+                // Get the new coordinator's details
+                MemberInfo newCoord = registry.getMemberInfo(newCoordinatorId);
+                
+                // Notify the new coordinator directly
+                PrintWriter newCoordWriter = registry.getWriter(newCoordinatorId);
+                if (newCoordWriter != null) {
+                    Message coordNotif = Message.system("You are now the COORDINATOR of this group. Details: " + newCoord.toString());
+                    newCoordWriter.println(coordNotif.toProtocolString());
+                    newCoordWriter.flush();
+                }
+                
+                // Announce to everyone
+                Message announcement = Message.system(newCoordinatorId + " is the new COORDINATOR");
+                broadcastSystemMessage(announcement);
+            } else {
+                // Group is now empty
+                return;
+            }
         } else {
-            notification = Message.system(memberId + " disconnected (timeout)");
+            // Regular member timeout
+            Message notification = Message.system(memberId + " disconnected (timeout)");
+            broadcastSystemMessage(notification);
         }
-        
-        // Broadcast to remaining members
-        broadcastSystemMessage(notification);
     }
     
     /**
@@ -192,3 +205,25 @@ public class HeartbeatMonitor {
         return running;
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
