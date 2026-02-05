@@ -14,12 +14,12 @@ This is a **production-ready, fault-tolerant group communication system** built 
 |-------------|--------|----------|
 | Group formation & connection (10 marks) | ✅ Complete | Client GUI, server authentication, multi-client support |
 | Group state maintenance (5 marks) | ✅ Complete | Thread-safe registry, timestamped messages, ping tracking |
-| Coordinator selection (5 marks) | ✅ Complete | Automatic election, re-election on failure |
-| Design patterns (10 marks) | ✅ Complete | 4 patterns: Singleton, Strategy, Observer, Value Object |
-| Fault tolerance (10 marks) | ✅ Complete | 3-layer strategy, heartbeat monitoring, graceful recovery |
-| JUnit testing (10 marks) | ✅ Complete | 12 comprehensive tests, 100% pass rate |
+| Coordinator selection (5 marks) | -| Automatic election, re-election on failure |
+| Design patterns (10 marks) | - | 4 patterns: Singleton, Strategy, Observer, Value Object |
+| Fault tolerance (10 marks) | -| 3-layer strategy, heartbeat monitoring, graceful recovery |
+| JUnit testing (10 marks) | - | 12 comprehensive tests, 100% pass rate |
 
-**Total: 50/50 marks** ✅
+
 
 ---
 

@@ -2,38 +2,11 @@
 
 ## 🚀 Get Started in 3 Steps
 
-### Step 1: Build the Project
-
-```bash
-cd group-communication-system
-./build.sh
 ```
 
-Expected output:
-```
-╔════════════════════════════════════════════════╗
-║  Group Communication System - Build Script     ║
-╚════════════════════════════════════════════════╝
+### Step 1: Start the Server
 
-[1/4] Compiling shared classes...
-✓ Shared classes compiled
-[2/4] Compiling pattern classes...
-✓ Pattern classes compiled
-[3/4] Compiling server classes...
-✓ Server classes compiled
-[4/4] Compiling client classes...
-✓ Client classes compiled
-
-════════════════════════════════════════════════
-     ✓ All classes compiled successfully!       
-════════════════════════════════════════════════
-```
-
-### Step 2: Start the Server
-
-Open a terminal and run:
-```bash
-./run-server.sh
+File: GroupCommunicationServer
 ```
 
 Expected output:
@@ -50,8 +23,8 @@ Waiting for clients to connect...
 ### Step 3: Start Clients
 
 Open **new terminals** (one for each client) and run:
-```bash
-./run-client.sh
+```
+File: GroupCommunicationClient
 ```
 
 **Client 1 (Alice)**:
@@ -304,51 +277,7 @@ By running and testing this system, you'll understand:
    - Integration tests
    - Test-driven development
 
----
 
-## 📚 Next Steps
 
-After mastering the basics, try:
 
-1. **Extend the System**:
-   - Add file transfer
-   - Implement message encryption
-   - Add user authentication
-   - Create chat rooms/channels
 
-2. **Improve Performance**:
-   - Implement message queuing
-   - Add message compression
-   - Optimize network protocol
-   - Add connection pooling
-
-3. **Enhance Features**:
-   - Message history
-   - User status (online/away/busy)
-   - Typing indicators
-   - Read receipts
-
----
-
-## 📖 Documentation
-
-- **README.md**: Comprehensive project documentation
-- **IMPLEMENTATION_GUIDE.md**: Detailed implementation explanation
-- **MARKING_GUIDE.md**: Requirements coverage mapping
-- **Javadoc**: In-code documentation for every method
-
----
-
-## 🤝 Support
-
-For issues or questions:
-1. Check the relevant documentation file
-2. Review Javadoc comments in source code
-3. Run JUnit tests to verify functionality
-4. Check troubleshooting section above
-
----
-
-**Happy Coding! 🎉**
-
-This system demonstrates production-ready Java development with proper design patterns, fault tolerance, and comprehensive testing. Feel free to extend and experiment!
