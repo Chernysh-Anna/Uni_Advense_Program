@@ -119,7 +119,7 @@ public class GroupRegistry {
         
         newCoordinator.setCoordinator(true);
         currentCoordinatorId = newCoordinatorId;
-        
+        // додати більше інформації про нового координатора
         System.out.println("[REGISTRY] " + newCoordinatorId + " elected as new COORDINATOR");
     }
     
@@ -208,7 +208,7 @@ public class GroupRegistry {
      */
     public synchronized String getFormattedMemberList() {
         StringBuilder sb = new StringBuilder();
-        sb.append("=== GROUP MEMBERS (Total: ").append(members.size()).append(") ===\n");
+        sb.append("Group Members (Total: ").append(members.size()).append(") \n");
         
         for (MemberInfo member : members.values()) {
             sb.append(member.toString()).append("\n");

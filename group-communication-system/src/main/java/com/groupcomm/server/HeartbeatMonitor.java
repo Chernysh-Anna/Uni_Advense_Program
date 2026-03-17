@@ -104,7 +104,7 @@ public class HeartbeatMonitor {
             try {
                 writer.println(protocolString);
                 writer.flush();
-                
+                // Можливо дещо надлишкова пееревірка
                 // Check if there was an error (writer.checkError() returns true if there was an error)
                 if (!writer.checkError()) {
                     registry.updateMemberPing(memberId);

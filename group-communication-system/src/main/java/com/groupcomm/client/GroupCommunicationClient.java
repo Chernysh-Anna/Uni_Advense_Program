@@ -21,8 +21,7 @@ public class GroupCommunicationClient extends JFrame {
     private JTextField messageField;
     private JButton sendButton;
     
-    private JLabel statusLabel;
-    private JLabel coordinatorLabel;
+
     
     // Network
     private Socket socket;
@@ -69,16 +68,7 @@ public class GroupCommunicationClient extends JFrame {
         disconnectButton.setEnabled(false);
         connPanel.add(disconnectButton);
         
-        JPanel statusPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        statusLabel = new JLabel("Status: Disconnected");
-        statusLabel.setForeground(Color.RED);
-        coordinatorLabel = new JLabel(" | Coordinator: N/A");
-        statusPanel.add(statusLabel);
-        statusPanel.add(coordinatorLabel);
-        
-        topPanel.add(connPanel);
-        topPanel.add(statusPanel);
-        add(topPanel, BorderLayout.NORTH);
+        add(connPanel, BorderLayout.NORTH);
         
         // 2. Center Panel (Messages)
         messageArea = new JTextArea();
@@ -197,9 +187,7 @@ public class GroupCommunicationClient extends JFrame {
             // Simple logic: if message says "YOU", update label. 
             // If it says someone else is new coord, we could parse it, 
             // but the message text itself is sufficient notification.
-            if(content.contains("YOU")) {
-                SwingUtilities.invokeLater(() -> coordinatorLabel.setText(" | Coordinator: YOU"));
-            }
+           
         }
         
         // Also display the message in chat
@@ -222,7 +210,6 @@ public class GroupCommunicationClient extends JFrame {
             disconnectButton.setEnabled(false);
             messageField.setEnabled(false);
             sendButton.setEnabled(false);
-            statusLabel.setText("Status: Disconnected");
         });
     }
     
@@ -232,8 +219,6 @@ public class GroupCommunicationClient extends JFrame {
             disconnectButton.setEnabled(true);
             messageField.setEnabled(true);
             sendButton.setEnabled(true);
-            statusLabel.setText("Status: Connected as " + memberId);
-            if (isCoordinator) coordinatorLabel.setText(" | Coordinator: YOU");
         });
     }
     

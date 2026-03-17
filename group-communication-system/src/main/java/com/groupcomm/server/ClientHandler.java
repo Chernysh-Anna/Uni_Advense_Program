@@ -117,6 +117,8 @@ public class ClientHandler implements Runnable {
                 String line = input.nextLine();
                 if (line == null || line.trim().isEmpty()) continue;
                 
+
+                // for comand "/who" to show all members, "/quit" to leave, etc.
                 if (line.startsWith("/")) {
                     handleCommand(line);
                     continue;
@@ -141,9 +143,12 @@ public class ClientHandler implements Runnable {
                 return Message.privateMessage(memberId, recipient, content);
             }
         }
+        //не засаряє пінговими повідомленнями
         if (line.contains("|")) {
             return Message.fromProtocolString(line);
         }
+        
+
         return Message.broadcast(memberId, line);
     }
     
@@ -157,8 +162,7 @@ public class ClientHandler implements Runnable {
         
         if (message.getType() == Message.MessageType.PRIVATE) {
             privateStrategy.sendMessage(message, registry.getAllWriters(), false);
-        } else {
-            // FIX: Changed 'true' to 'false'. 
+        } else { 
             // Now the sender ALSO receives the broadcast, confirming it was sent.
             broadcastStrategy.sendMessage(message, registry.getAllWriters(), false);
         }
@@ -166,7 +170,9 @@ public class ClientHandler implements Runnable {
     
     private void handleCommand(String command) {
         String cmd = command.split(" ", 2)[0].toLowerCase();
-        if (cmd.equals("/who") || cmd.equals("/list")) {
+
+
+        if (cmd.equals("/list")) {
             String list = registry.getFormattedMemberList();
             output.println(Message.system(list).toProtocolString());
         } else if (cmd.equals("/quit")) {
@@ -190,6 +196,8 @@ public class ClientHandler implements Runnable {
             Message leaveMsg;
             if (wasCoordinator) {
                 String newC = registry.getCoordinatorId();
+                // TO DO:
+                //можна додати більше фнфи про нового координатора
                 leaveMsg = Message.system("Coordinator " + memberId + " left. New Coordinator: " + newC);
             } else {
                 leaveMsg = Message.system(memberId + " left.");
