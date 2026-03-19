@@ -179,25 +179,14 @@ public class GroupCommunicationClient extends JFrame {
     }
     
     private void handleSystemMsg(Message msg) {
-        String content = msg.getContent();
+        appendMsg("[SYSTEM] " + msg.getContent());
         
-        // Update Coordinator Label if needed
-        if (content.contains("YOU ARE THE COORDINATOR") || content.contains("is the new COORDINATOR")) {
-            String labelText = content.contains("YOU") ? "YOU" : "Changed"; 
-            // Simple logic: if message says "YOU", update label. 
-            // If it says someone else is new coord, we could parse it, 
-            // but the message text itself is sufficient notification.
-           
-        }
-        
-        // Also display the message in chat
-        appendMsg("[SYSTEM] " + content);
     }
     
     private void sendMessage() {
         String text = messageField.getText().trim();
         if (!text.isEmpty()) {
-            output.println(text); // Server will echo this back now
+            output.println(text); // Server will echo this back 
             messageField.setText("");
         }
     }

@@ -30,7 +30,7 @@ This is a production-ready, fault-tolerant group communication system built usin
 
 ## Architecture & Design Patterns
 
-### Design Patterns Implemented (10 marks requirement)
+### Design Patterns Implemented 
 
 #### 1. **Singleton Pattern** - GroupRegistry
 **Location**: `GroupRegistry.java`
@@ -109,7 +109,7 @@ public class PrivateMessageStrategy implements MessageStrategy { ... }
 
 ## Requirements Coverage
 
-### ✅ Group Formation & Connection (10 marks)
+###  Group Formation & Connection 
 
 **Implementation**:
 - `GroupCommunicationClient.java` - GUI for ID, IP, port input (lines 89-141)
@@ -158,7 +158,7 @@ private final LocalDateTime timestamp = LocalDateTime.now();
 
 ---
 
-### ✅ Coordinator Selection (5 marks)
+###  Coordinator Selection 
 
 **Implementation**:
 - `GroupRegistry.java` - Automatic election logic (lines 73-88, 120-129)
@@ -187,7 +187,7 @@ if (wasCoordinator && !members.isEmpty()) {
 
 ---
 
-### ✅ Design Patterns (10 marks)
+###  Design Patterns 
 
 **Patterns Implemented**: 4 major patterns (Singleton, Strategy, Observer, Value Object)
 
@@ -197,7 +197,7 @@ if (wasCoordinator && !members.isEmpty()) {
 
 ---
 
-### ✅ Fault Tolerance (10 marks)
+###  Fault Tolerance 
 
 **Implementation**:
 1. **Heartbeat Monitoring** (`HeartbeatMonitor.java`)
@@ -244,21 +244,21 @@ try {
 
 ---
 
-### ✅ JUnit Testing (10 marks)
+###  JUnit Testing 
 
 **Test Suite**: `GroupCommunicationSystemTest.java` (12 comprehensive tests)
 
 **Coverage**:
-1. ✅ Coordinator election
-2. ✅ Member registration/removal
-3. ✅ Duplicate ID rejection
-4. ✅ Broadcast messaging
-5. ✅ Private messaging
-6. ✅ Group state maintenance
-7. ✅ Message serialization
-8. ✅ Empty group handling
-9. ✅ Ping updates
-10. ✅ Timeout detection
+1. Coordinator election
+2. Member registration/removal
+3. Duplicate ID rejection
+4. Broadcast messaging
+5. Private messaging
+6. Group state maintenance
+7. Message serialization
+8. Empty group handling
+9. Ping updates
+10. Timeout detection
 
 **Running Tests**:
 ```bash
@@ -271,36 +271,6 @@ java -jar junit-platform-console-standalone.jar \
   --class-path . --scan-class-path
 ```
 
----
-
-## Setup & Installation
-
-### Prerequisites
-- Java 11 or higher
-- JUnit 5 (for testing)
-
-### Compilation
-
-```bash
-# Compile shared classes
-javac src/main/java/com/groupcomm/shared/*.java
-
-# Compile pattern classes
-javac -cp src/main/java src/main/java/com/groupcomm/patterns/*.java
-
-# Compile server classes
-javac -cp src/main/java src/main/java/com/groupcomm/server/*.java
-
-# Compile client classes
-javac -cp src/main/java src/main/java/com/groupcomm/client/*.java
-```
-
-**Or use a single command:**
-```bash
-find src/main/java -name "*.java" -exec javac -cp src/main/java {} +
-```
-
----
 
 ## Usage Guide
 
@@ -353,9 +323,8 @@ Hello everyone!
 
 #### Commands
 
-- `/who` or `/list` - Show all group members
-- `/help` - Show available commands
-- `/quit` or `/exit` - Leave the group
+-  `/list` - Show all group members
+- `/quit` - Leave the group
 
 #### Example Session
 
@@ -388,29 +357,7 @@ java -jar junit-platform-console-standalone.jar \
   --scan-class-path
 ```
 
-### Test Results
 
-Expected output:
-```
-✓ Test 1 passed: First member becomes coordinator
-✓ Test 2 passed: Subsequent members are not coordinators
-✓ Test 3 passed: Duplicate ID is rejected
-✓ Test 4 passed: New coordinator elected when coordinator leaves
-✓ Test 5 passed: Member removal updates registry correctly
-✓ Test 6 passed: Broadcast message reaches all members
-✓ Test 7 passed: Private message reaches only recipient
-✓ Test 8 passed: Message protocol serialization works correctly
-✓ Test 9 passed: Group state is maintained correctly
-✓ Test 10 passed: System handles empty group correctly
-✓ Test 11 passed: Member ping updates are recorded
-✓ Test 12 passed: Member responsiveness check works
-
-============================================================
-ALL TESTS COMPLETED SUCCESSFULLY
-============================================================
-```
-
----
 
 ## Design Pattern Implementation
 
@@ -490,33 +437,30 @@ BroadcastMessage   PrivateMessage
 
 ## Code Quality Features
 
-### Documentation
-- ✅ Javadoc on every public method
-- ✅ Inline comments explaining complex logic
-- ✅ Class-level design pattern documentation
+
 
 ### Thread Safety
-- ✅ ConcurrentHashMap for shared state
-- ✅ Synchronized methods for critical sections
-- ✅ SwingUtilities.invokeLater for GUI updates
-- ✅ Volatile fields for visibility
+-  ConcurrentHashMap for shared state
+-  Synchronized methods for critical sections
+-  SwingUtilities.invokeLater for GUI updates
+-  Volatile fields for visibility
 
 ### Error Handling
-- ✅ Try-catch-finally in all I/O operations
-- ✅ Informative error messages to users
-- ✅ Logging to console for debugging
-- ✅ Graceful degradation on failures
+-  Try-catch-finally in all I/O operations
+-  Informative error messages to users
+-  Logging to console for debugging
+-  Graceful degradation on failures
 
 ### Best Practices
-- ✅ Single Responsibility Principle (each class has one job)
-- ✅ DRY (Don't Repeat Yourself)
-- ✅ Meaningful variable names
-- ✅ Constants for magic numbers
-- ✅ Factory methods for object creation
+-  each class has one job
+-  Don't Repeat Yourself
+-  Meaningful variable names
+- Constants for magic numbers
+- Factory methods for object creation
 
 ---
 
-## Project Structure
+
 
 ```
 group-communication-system/
@@ -549,28 +493,3 @@ group-communication-system/
 
 ---
 
-## Requirements Checklist
-
-| Requirement | Implementation | Test Coverage | Marks |
-|-------------|----------------|---------------|-------|
-| Group formation & connection | ✅ ClientHandler, GUI | ✅ Test 1, 2, 3 | 10/10 |
-| Group state maintenance | ✅ GroupRegistry, Message | ✅ Test 9, 11 | 5/5 |
-| Coordinator selection | ✅ GroupRegistry election | ✅ Test 4, 10 | 5/5 |
-| Design patterns | ✅ 4 patterns documented | ✅ Test 6, 7 | 10/10 |
-| Fault tolerance | ✅ 3-layer strategy | ✅ Test 4, 5, 12 | 10/10 |
-| JUnit testing | ✅ 12 comprehensive tests | ✅ All pass | 10/10 |
-| **TOTAL** | | | **50/50** |
-
----
-
-## Contact & Support
-
-For questions or issues, please review:
-1. This README documentation
-2. Inline code comments
-3. Javadoc documentation
-4. Test cases for usage examples
-
----
-
-*This implementation demonstrates professional-grade Java development with proper design patterns, fault tolerance, and comprehensive testing.*
