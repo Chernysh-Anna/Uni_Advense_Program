@@ -35,11 +35,8 @@ public class GroupCommunicationServer {
     private ServerSocket serverSocket;
     private volatile boolean running;
     
-    /**
-     * Constructs a server on the specified port.
-     * 
-     * @param port Port number to listen on
-     */
+    // Constructs a server on the specified port
+    
     public GroupCommunicationServer(int port) {
         this.port = port;
         this.registry = GroupRegistry.getInstance();
@@ -48,9 +45,8 @@ public class GroupCommunicationServer {
         this.running = false;
     }
     
-    /**
-     * Constructs a server on the default port.
-     */
+    // Constructs a server on the default port.
+
     public GroupCommunicationServer() {
         this(DEFAULT_PORT);
     }
@@ -58,8 +54,6 @@ public class GroupCommunicationServer {
     /**
      * Starts the server.
      * Opens server socket, starts heartbeat monitor, and begins accepting clients.
-     * 
-     * @throws IOException if server cannot start
      */
     public void start() throws IOException {
         if (running) {
@@ -70,11 +64,10 @@ public class GroupCommunicationServer {
         serverSocket = new ServerSocket(port);
         running = true;
         
-        System.out.println("╔════════════════════════════════════════════════╗");
-        System.out.println("║   Group Communication Server                  ║");
-        System.out.println("╚════════════════════════════════════════════════╝");
+ 
+        System.out.println("Group Server");
         System.out.println("Server started on port: " + port);
-        System.out.println("Waiting for clients to connect...");
+        System.out.println("Waiting for clients to connect");
         System.out.println();
         
         // Start heartbeat monitoring
@@ -146,29 +139,19 @@ public class GroupCommunicationServer {
         System.out.println("[SERVER] Server stopped");
     }
     
-    /**
-     * Checks if the server is currently running.
-     * 
-     * @return true if running
-     */
+    //Checks if the server is currently running
+
     public boolean isRunning() {
         return running;
     }
     
-    /**
-     * Gets the port number the server is listening on.
-     * 
-     * @return Port number
-     */
+    //Gets the port number the server is listening on
+ 
     public int getPort() {
         return port;
     }
     
-    /**
-     * Main method to start the server.
-     * 
-     * @param args Command line arguments (optional: port number)
-     */
+    // Main method to start the server
     public static void main(String[] args) {
         int port = DEFAULT_PORT;
         
