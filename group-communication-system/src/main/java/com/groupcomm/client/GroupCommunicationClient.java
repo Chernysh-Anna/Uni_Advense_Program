@@ -56,7 +56,7 @@ public class GroupCommunicationClient extends JFrame {
         serverIpField = new JTextField("127.0.0.1", 10);
         connPanel.add(serverIpField);
         connPanel.add(new JLabel("Port:"));
-        serverPortField = new JTextField("8888", 5);
+        serverPortField = new JTextField("1234", 5);
         connPanel.add(serverPortField);
         connPanel.add(new JLabel("ID:"));
         memberIdField = new JTextField(8);

@@ -9,7 +9,7 @@ import java.util.Map;
  * 
  * Design Pattern: Strategy Pattern Implementation
  */
-public class PrivateMessageStrategy implements MessageStrategy {
+public class PrivateStrategy implements MessageStrategy {
     
     @Override
     public void sendMessage(Message message, Map<String, PrintWriter> writers, boolean excludeSender) {

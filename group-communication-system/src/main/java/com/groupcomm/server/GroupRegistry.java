@@ -5,37 +5,19 @@ import java.io.PrintWriter;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Singleton registry for managing group members.
- * Thread-safe implementation to maintain group state.
- * 
- * Design Pattern: Singleton Pattern
- * Purpose: Ensures a single source of truth for group membership across all server threads.
- */
-
 public class GroupRegistry {
     
     private static volatile GroupRegistry instance;
-    
-    // Thread-safe collections for concurrent access
     private final Map<String, MemberInfo> members;
     private final Map<String, PrintWriter> writers;
     private String currentCoordinatorId;
     
-    /**
-     * Private constructor for Singleton pattern.
-     */
     private GroupRegistry() {
         this.members = new ConcurrentHashMap<>();
         this.writers = new ConcurrentHashMap<>();
         this.currentCoordinatorId = null;
     }
-    
-    /**
-     * Gets the singleton instance (thread-safe double-checked locking).
-     * 
-     * @return The singleton GroupRegistry instance
-     */
+   
     public static GroupRegistry getInstance() {
         if (instance == null) {
             synchronized (GroupRegistry.class) {
@@ -47,14 +29,7 @@ public class GroupRegistry {
         return instance;
     }
     
-    /**
-     * Registers a new member in the group.
-     * If this is the first member, they become the coordinator.
-     * 
-     * @param memberInfo Member information
-     * @param writer PrintWriter for sending messages to this member
-     * @return true if member was registered successfully, false if ID already exists
-     */
+    //Registers a new member + check if this is the first member
     public synchronized boolean registerMember(MemberInfo memberInfo, PrintWriter writer) {
         String memberId = memberInfo.getMemberId();
         
@@ -78,13 +53,7 @@ public class GroupRegistry {
         return true;
     }
     
-    /**
-     * Removes a member from the group.
-     * If the member was the coordinator, elects a new one.
-     * 
-     * @param memberId ID of the member to remove
-     * @return true if member was removed, false if member didn't exist
-     */
+    // Removes a member + if  was coordinator, elects a new one.
     public synchronized boolean removeMember(String memberId) {
         if (!members.containsKey(memberId)) {
             return false;
@@ -97,7 +66,7 @@ public class GroupRegistry {
         
         System.out.println("[REGISTRY] " + memberId + " removed from group");
         
-        // Elect new coordinator if needed
+        // Elect new coordinator 
         if (wasCoordinator && !members.isEmpty()) {
             electNewCoordinator();
         } else if (members.isEmpty()) {
@@ -108,26 +77,16 @@ public class GroupRegistry {
         return true;
     }
     
-    /**
-     * Elects a new coordinator from remaining members.
-     * Uses the first member in the registry (arbitrary but deterministic).
-     */
     private void electNewCoordinator() {
-        // Get first available member
         String newCoordinatorId = members.keySet().iterator().next();
         MemberInfo newCoordinator = members.get(newCoordinatorId);
         
         newCoordinator.setCoordinator(true);
         currentCoordinatorId = newCoordinatorId;
-        // додати більше інформації про нового координатора
         System.out.println("[REGISTRY] " + newCoordinatorId + " elected as new COORDINATOR");
     }
     
-    /**
-     * Updates the last ping time for a member.
-     * 
-     * @param memberId ID of the member
-     */
+    //Updates the last ping time for a member.
     public synchronized void updateMemberPing(String memberId) {
         MemberInfo member = members.get(memberId);
         if (member != null) {
@@ -135,80 +94,44 @@ public class GroupRegistry {
         }
     }
     
-    /**
-     * Gets information about a specific member.
-     * 
-     * @param memberId ID of the member
-     * @return MemberInfo or null if not found
-     */
+    // Gets information about a specific member.
     public MemberInfo getMemberInfo(String memberId) {
         return members.get(memberId);
     }
     
-    /**
-     * Gets the current coordinator ID.
-     * 
-     * @return Coordinator ID or null if no coordinator
-     */
+
     public String getCoordinatorId() {
         return currentCoordinatorId;
     }
-    
-    /**
-     * Gets all member information.
-     * 
-     * @return Unmodifiable map of all members
-     */
+
     public Map<String, MemberInfo> getAllMembers() {
         return Collections.unmodifiableMap(members);
     }
     
-    /**
-     * Gets all PrintWriters for message broadcasting.
-     * 
-     * @return Unmodifiable map of all writers
-     */
+    // for message broadcasting.
     public Map<String, PrintWriter> getAllWriters() {
         return Collections.unmodifiableMap(writers);
     }
     
-    /**
-     * Gets a specific member's PrintWriter.
-     * 
-     * @param memberId ID of the member
-     * @return PrintWriter or null if not found
-     */
+    //Gets a specific member's PrintWriter.
     public PrintWriter getWriter(String memberId) {
         return writers.get(memberId);
     }
     
-    /**
-     * Checks if a member ID is already registered.
-     * 
-     * @param memberId ID to check
-     * @return true if ID exists
-     */
+    // Checks if ID is already registered
     public boolean isMemberRegistered(String memberId) {
         return members.containsKey(memberId);
     }
-    
-    /**
-     * Gets the number of registered members.
-     * 
-     * @return Number of members
-     */
+
+    //FOR testing
     public int getMemberCount() {
         return members.size();
     }
     
-    /**
-     * Gets a formatted list of all members for display.
-     * 
-     * @return Formatted string with all member information
-     */
-    public synchronized String getFormattedMemberList() {
+    //formatted list of members 
+    public synchronized String getMemberList() {
         StringBuilder sb = new StringBuilder();
-        sb.append("Group Members (Total: ").append(members.size()).append(") \n");
+        sb.append("Group Members ( ").append(members.size()).append(") \n");
         
         for (MemberInfo member : members.values()) {
             sb.append(member.toString()).append("\n");

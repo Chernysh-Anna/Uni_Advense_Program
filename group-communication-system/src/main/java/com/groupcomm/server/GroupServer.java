@@ -1,60 +1,48 @@
 ﻿package com.groupcomm.server;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Main server class for the group communication system.
- * Accepts client connections and manages the group infrastructure.
- * 
- * Design Patterns Used:
- * - Singleton (GroupRegistry)
- * - Strategy (MessageStrategy implementations)
- * - Observer (HeartbeatMonitor)
- * 
- * Features:
- * - Multi-threaded client handling
- * - Automatic coordinator election
- * - Fault tolerance through heartbeat monitoring
- * - Thread-safe member registry
- */
-public class GroupCommunicationServer {
+import com.groupcomm.patterns.BroadcastStrategy;
+import com.groupcomm.patterns.MessageStrategy;
+import com.groupcomm.shared.Message;
+
+
+public class GroupServer {
     
-    private static final int DEFAULT_PORT = 8888;
-    private static final int THREAD_POOL_SIZE = 50;
+    private static final int DEFAULT_PORT = 1234;
+   
+    private static final int THREAD_POOL_SIZE = 10;
     
     private final int port;
     private final GroupRegistry registry;
-    private final HeartbeatMonitor heartbeatMonitor;
+    private final BeatMonitor beatMonitor;
     private final ExecutorService executorService;
     
     private ServerSocket serverSocket;
     private volatile boolean running;
     
     // Constructs a server on the specified port
-    
-    public GroupCommunicationServer(int port) {
+    public GroupServer(int port) {
         this.port = port;
         this.registry = GroupRegistry.getInstance();
-        this.heartbeatMonitor = new HeartbeatMonitor(registry);
+        this.beatMonitor = new BeatMonitor(registry);
         this.executorService = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
         this.running = false;
     }
     
-    // Constructs a server on the default port.
-
-    public GroupCommunicationServer() {
+    // Constructs a server on the default port
+    public GroupServer() {
         this(DEFAULT_PORT);
     }
     
-    /**
-     * Starts the server.
-     * Opens server socket, starts heartbeat monitor, and begins accepting clients.
-     */
+    //Opens server socket, startsbeat monitor, accept clients
     public void start() throws IOException {
         if (running) {
             System.out.println("Server is already running");
@@ -65,22 +53,16 @@ public class GroupCommunicationServer {
         running = true;
         
  
-        System.out.println("Group Server");
         System.out.println("Server started on port: " + port);
-        System.out.println("Waiting for clients to connect");
+        System.out.println("Waiting for users");
         System.out.println();
         
-        // Start heartbeat monitoring
-        heartbeatMonitor.start();
+        beatMonitor.start();
         
-        // Accept client connections
         acceptClients();
     }
     
-    /**
-     * Main loop to accept incoming client connections.
-     * Each client is handled in a separate thread from the pool.
-     */
+    // loop to accept incoming client connections
     private void acceptClients() {
         while (running) {
             try {
@@ -101,10 +83,7 @@ public class GroupCommunicationServer {
         }
     }
     
-    /**
-     * Stops the server gracefully.
-     * Closes all connections and shuts down thread pool.
-     */
+    //Closes all connections and shuts down thread pool
     public void stop() {
         if (!running) {
             return;
@@ -112,9 +91,12 @@ public class GroupCommunicationServer {
         
         System.out.println("\n[SERVER] Shutting down...");
         running = false;
-        
-        // Stop heartbeat monitor
-        heartbeatMonitor.stop();
+
+        Message shutdownMsg = Message.system("The server is shut down in 10 seconds. Please try to reconnect later.");
+        MessageStrategy broadcastStrategy = new BroadcastStrategy();
+        broadcastStrategy.sendMessage(shutdownMsg, registry.getAllWriters(), false);
+
+        beatMonitor.stop();
         
         // Close server socket
         try {
@@ -139,23 +121,11 @@ public class GroupCommunicationServer {
         System.out.println("[SERVER] Server stopped");
     }
     
-    //Checks if the server is currently running
-
-    public boolean isRunning() {
-        return running;
-    }
     
-    //Gets the port number the server is listening on
- 
-    public int getPort() {
-        return port;
-    }
-    
-    // Main method to start the server
+  
     public static void main(String[] args) {
         int port = DEFAULT_PORT;
         
-        // Parse command line arguments
         if (args.length > 0) {
             try {
                 port = Integer.parseInt(args[0]);
@@ -169,9 +139,9 @@ public class GroupCommunicationServer {
             }
         }
         
-        final GroupCommunicationServer server = new GroupCommunicationServer(port);
+        final GroupServer server = new GroupServer(port);
         
-        // Add shutdown hook for graceful shutdown
+        //  shutdown hook 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             System.out.println("\n[SERVER] Shutdown signal received");
             server.stop();

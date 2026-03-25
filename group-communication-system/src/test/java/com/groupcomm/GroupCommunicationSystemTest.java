@@ -3,8 +3,8 @@
 import com.groupcomm.server.GroupRegistry;
 import com.groupcomm.shared.MemberInfo;
 import com.groupcomm.shared.Message;
-import com.groupcomm.patterns.BroadcastMessageStrategy;
-import com.groupcomm.patterns.PrivateMessageStrategy;
+import com.groupcomm.patterns.BroadcastStrategy;
+import com.groupcomm.patterns.PrivateStrategy;
 import org.junit.jupiter.api.*;
 
 import java.io.PrintWriter;
@@ -218,7 +218,7 @@ public class GroupCommunicationSystemTest {
             stringWriters.put(id, sw);
         }
         
-        BroadcastMessageStrategy strategy = new BroadcastMessageStrategy();
+        BroadcastStrategy strategy = new BroadcastStrategy();
         Message message = Message.broadcast("Alice", "Hello everyone!");
         
         // Act
@@ -255,7 +255,7 @@ public class GroupCommunicationSystemTest {
             stringWriters.put(id, sw);
         }
         
-        PrivateMessageStrategy strategy = new PrivateMessageStrategy();
+        PrivateStrategy strategy = new PrivateStrategy();
         Message message = Message.privateMessage("Alice", "Bob", "Secret message");
         
         // Act

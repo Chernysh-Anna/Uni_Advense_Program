@@ -21,8 +21,8 @@ public class ClientHandler implements Runnable {
     public ClientHandler(Socket socket, GroupRegistry registry) {
         this.socket = socket;
         this.registry = registry;
-        this.broadcastStrategy = new BroadcastMessageStrategy();
-        this.privateStrategy = new PrivateMessageStrategy();
+        this.broadcastStrategy = new BroadcastStrategy();
+        this.privateStrategy = new PrivateStrategy();
     }
     
     @Override
@@ -33,7 +33,7 @@ public class ClientHandler implements Runnable {
                 handleClientMessages();
             }
         } catch (IOException e) {
-            System.err.println("[CLIENT-HANDLER] Error handling client: " + e.getMessage());
+            System.err.println("[CLIENT HANDLER] Error handling client: " + e.getMessage());
         } finally {
             cleanup();
         }
@@ -42,12 +42,12 @@ public class ClientHandler implements Runnable {
     private void setupConnection() throws IOException {
         input = new Scanner(socket.getInputStream());
         output = new PrintWriter(socket.getOutputStream(), true);
-        System.out.println("[CLIENT-HANDLER] New connection from " + socket.getInetAddress());
+        System.out.println("[CLIENT HANDLER] New connection from " + socket.getInetAddress());
     }
     
     private boolean authenticateMember() {
         try {
-            output.println("SUBMITID");
+            output.println("Submit id");
             output.flush();
             
             if (!input.hasNextLine()) return false;
@@ -78,12 +78,9 @@ public class ClientHandler implements Runnable {
             boolean isCoordinator = memberInfo.isCoordinator();
             output.println("ACCEPTED|" + memberId + "|" + isCoordinator);
             
-            // --- WELCOME & COORDINATOR NOTIFICATION ---
+            //  welcome notification to client  
             if (isCoordinator) {
-                Message welcome = Message.system(
-                    "You are the first member.\n" +
-                    "*** YOU ARE THE COORDINATOR ***"
-                );
+                Message welcome = Message.system("YOU ARE THE COORDINATOR !!!");
                 output.println(welcome.toProtocolString());
             } else {
                 String coordId = registry.getCoordinatorId();
@@ -118,7 +115,7 @@ public class ClientHandler implements Runnable {
                 if (line == null || line.trim().isEmpty()) continue;
                 
 
-                // for comand "/who" to show all members, "/quit" to leave, etc.
+                // for comand "/list" show all members, "/quit" to leave
                 if (line.startsWith("/")) {
                     handleCommand(line);
                     continue;
@@ -133,7 +130,7 @@ public class ClientHandler implements Runnable {
             }
         }
     }
-    
+    //private massenges
     private Message parseClientMessage(String line) {
         if (line.startsWith("@")) {
             int spaceIndex = line.indexOf(' ');
@@ -163,7 +160,7 @@ public class ClientHandler implements Runnable {
         if (message.getType() == Message.MessageType.PRIVATE) {
             privateStrategy.sendMessage(message, registry.getAllWriters(), false);
         } else { 
-            // Now the sender ALSO receives the broadcast, confirming it was sent.
+            //  sender also receives the broadcast, confirming it was sent.
             broadcastStrategy.sendMessage(message, registry.getAllWriters(), false);
         }
     }
@@ -173,7 +170,7 @@ public class ClientHandler implements Runnable {
 
 
         if (cmd.equals("/list")) {
-            String list = registry.getFormattedMemberList();
+            String list = registry.getMemberList();
             output.println(Message.system(list).toProtocolString());
         } else if (cmd.equals("/quit")) {
             Message goodbye = Message.system("Goodbye " + memberId);
@@ -197,7 +194,7 @@ public class ClientHandler implements Runnable {
             if (wasCoordinator) {
                 String newC = registry.getCoordinatorId();
                 // TO DO:
-                //можна додати більше фнфи про нового координатора
+                //можна додати більше iнфи про нового координатора (ip, порт)
                 leaveMsg = Message.system("Coordinator " + memberId + " left. New Coordinator: " + newC);
             } else {
                 leaveMsg = Message.system(memberId + " left.");

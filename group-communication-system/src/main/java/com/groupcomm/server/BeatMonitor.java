@@ -8,65 +8,49 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Monitors member health through periodic ping messages.
- * Implements fault tolerance by detecting unresponsive members.
- * 
- * Design Pattern: Observer Pattern (monitors state changes)
- * Purpose: Maintains group state through periodic health checks every 20 seconds.
- */
-public class HeartbeatMonitor {
+
+public class BeatMonitor {
     
-    private static final int PING_INTERVAL_SECONDS = 20;
-    private static final int TIMEOUT_SECONDS = 40; // 2x ping interval
-    
+    private static final int PING_INTERVAL = 20;
+    private static final int TIMEOUT = 40; 
     private final GroupRegistry registry;
     private final ScheduledExecutorService scheduler;
     private volatile boolean running;
     
-    /**
-     * Constructs a heartbeat monitor.
-     * 
-     * @param registry The group registry to monitor
-     */
-    public HeartbeatMonitor(GroupRegistry registry) {
+    //Constructor for user monitoring
+    public BeatMonitor(GroupRegistry registry) {
         this.registry = registry;
         this.scheduler = Executors.newSingleThreadScheduledExecutor();
         this.running = false;
     }
     
-    /**
-     * Starts the heartbeat monitoring.
-     * Sends ping messages every 20 seconds to all members.
-     */
+    // TO DO: must Sends ping messages every 20 seconds to all members
     public void start() {
         if (running) {
             return;
         }
         
         running = true;
-        System.out.println("[HEARTBEAT] Monitor started (ping every " + PING_INTERVAL_SECONDS + "s)");
+        System.out.println("[BEAT] Monitor started (ping every " + PING_INTERVAL + "s)");
         
-        // Schedule periodic ping task
+        // periodic ping 
         scheduler.scheduleAtFixedRate(
             this::sendPingToAllMembers,
-            PING_INTERVAL_SECONDS,
-            PING_INTERVAL_SECONDS,
+            PING_INTERVAL,
+            PING_INTERVAL,
             TimeUnit.SECONDS
         );
         
-        // Schedule periodic timeout check
+        // periodic timeout check
         scheduler.scheduleAtFixedRate(
             this::checkForTimeouts,
-            PING_INTERVAL_SECONDS * 2,
-            PING_INTERVAL_SECONDS,
+            TIMEOUT,
+            PING_INTERVAL,
             TimeUnit.SECONDS
         );
     }
     
-    /**
-     * Stops the heartbeat monitoring.
-     */
+    //stops the beating monitoring
     public void stop() {
         running = false;
         scheduler.shutdown();
@@ -78,12 +62,12 @@ public class HeartbeatMonitor {
             scheduler.shutdownNow();
             Thread.currentThread().interrupt();
         }
-        System.out.println("[HEARTBEAT] Monitor stopped");
+        System.out.println("[BEAT] Bating monitoring stops");
     }
     
     /**
-     * Sends ping messages to all registered members.
-     * Updates member state based on successful delivery.
+     * Sends ping messages to all  members
+     * Updates member state 
      */
     private void sendPingToAllMembers() {
         Map<String, PrintWriter> writers = registry.getAllWriters();
@@ -92,7 +76,7 @@ public class HeartbeatMonitor {
             return;
         }
         
-        System.out.println("[HEARTBEAT] Sending ping to " + writers.size() + " members");
+        System.out.println("[BEAT] Sending ping to " + writers.size() + " members");
         
         Message pingMessage = new Message("SERVER", null, "PING", Message.MessageType.PING);
         String protocolString = pingMessage.toProtocolString();
@@ -104,23 +88,19 @@ public class HeartbeatMonitor {
             try {
                 writer.println(protocolString);
                 writer.flush();
-                // Можливо дещо надлишкова пееревірка
-                // Check if there was an error (writer.checkError() returns true if there was an error)
+               
                 if (!writer.checkError()) {
                     registry.updateMemberPing(memberId);
                 } else {
-                    System.err.println("[HEARTBEAT] Failed to ping " + memberId + " (connection error)");
+                    System.err.println("[BEAT] Failed to ping " + memberId);
                 }
             } catch (Exception e) {
-                System.err.println("[HEARTBEAT] Failed to ping " + memberId + ": " + e.getMessage());
+                System.err.println("[BEAT] Failed to ping " + memberId + ": " + e.getMessage());
             }
         }
     }
     
-    /**
-     * Checks for members that haven't responded within the timeout period.
-     * Removes unresponsive members from the group.
-     */
+    // Removes members who haven't responded 
     private void checkForTimeouts() {
         Map<String, MemberInfo> members = registry.getAllMembers();
         
@@ -128,46 +108,42 @@ public class HeartbeatMonitor {
             String memberId = entry.getKey();
             MemberInfo memberInfo = entry.getValue();
             
-            if (!memberInfo.isResponsive(TIMEOUT_SECONDS)) {
-                System.err.println("[HEARTBEAT] Member " + memberId + " timed out (no response for " + TIMEOUT_SECONDS + "s)");
-                handleMemberTimeout(memberId);
+            if (!memberInfo.isResponsive(TIMEOUT)) {
+                System.err.println("[BEAT] Member " + memberId + " haven't responded within " + TIMEOUT + "s)");
+                handleTimeout(memberId);
             }
         }
     }
     
-    /**
-     * Handles a member timeout by removing them and notifying the group.
-     * Implements fault tolerance.
-     * 
-     * @param memberId ID of the timed-out member
-     */
-    private void handleMemberTimeout(String memberId) {
+    // removing non-responsive member and notifying the group
+    private void handleTimeout(String memberId) {
         MemberInfo memberInfo = registry.getMemberInfo(memberId);
         boolean wasCoordinator = memberInfo != null && memberInfo.isCoordinator();
         
-        // Remove the member
+
         registry.removeMember(memberId);
         
-        // FIXED: Proper coordinator change notification
         if (wasCoordinator) {
             String newCoordinatorId = registry.getCoordinatorId();
             if (newCoordinatorId != null) {
-                // Get the new coordinator's details
-                MemberInfo newCoord = registry.getMemberInfo(newCoordinatorId);
+                // notification about new coordinator 
+               MemberInfo newCoord = registry.getMemberInfo(newCoordinatorId);
+               PrintWriter newCoordWriter = registry.getWriter(newCoordinatorId);
                 
-                // Notify the new coordinator directly
-                PrintWriter newCoordWriter = registry.getWriter(newCoordinatorId);
-                if (newCoordWriter != null) {
-                    Message coordNotif = Message.system("You are now the COORDINATOR of this group. Details: " + newCoord.toString());
-                    newCoordWriter.println(coordNotif.toProtocolString());
-                    newCoordWriter.flush();
+               if (newCoordWriter != null) {
+                    try {
+                        Message coordNotif = Message.system("You are now the COORDINATOR: " + newCoord.toString());
+                        newCoordWriter.println(coordNotif.toProtocolString());
+                        newCoordWriter.flush();
+                    } catch (Exception e) {
+                        System.err.println("[BEAT] Failed to notify new coordinator: " + e.getMessage());
+                    }
+                    
+                    Message announcement = Message.system("New COORDINATOR: " + newCoord.toString());
+                    broadcastSystemMessage(announcement);
                 }
-                
-                // Announce to everyone
-                Message announcement = Message.system(newCoordinatorId + " is the new COORDINATOR");
-                broadcastSystemMessage(announcement);
             } else {
-                // Group is now empty
+                // if group empty
                 return;
             }
         } else {
@@ -177,11 +153,8 @@ public class HeartbeatMonitor {
         }
     }
     
-    /**
-     * Broadcasts a system message to all members.
-     * 
-     * @param message The system message to broadcast
-     */
+
+
     private void broadcastSystemMessage(Message message) {
         String protocolString = message.toProtocolString();
         Map<String, PrintWriter> writers = registry.getAllWriters();
@@ -196,11 +169,7 @@ public class HeartbeatMonitor {
         }
     }
     
-    /**
-     * Checks if the monitor is currently running.
-     * 
-     * @return true if running
-     */
+    //Checks if the monitor is currently running
     public boolean isRunning() {
         return running;
     }
